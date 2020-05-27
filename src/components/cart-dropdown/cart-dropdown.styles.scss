@@ -10,13 +10,13 @@
   top: 90px;
   right: 40px;
   z-index: 5;
-  overflow: hidden; /* Hide scrollbars */
+  //overflow: hidden; /* Hide scrollbars */
 
   .cart-items {
     height: 240px;
     display: flex;
     flex-direction: column;
-    //overflow: scroll;
+    overflow: scroll;
   }
 
   button {
