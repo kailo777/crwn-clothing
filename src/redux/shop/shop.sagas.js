@@ -9,7 +9,7 @@ export function* fetchCollectionsAsync() {
         const snapshot = yield collectionRef.get();
         const collectionsMap = yield call(
             convertCollectionsSnapshotToMap,
-            snapshot
+            snapshot, 
         );
         yield put(fetchCollectionSuccess(collectionsMap));
     } catch (error) {

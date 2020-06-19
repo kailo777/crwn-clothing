@@ -1,6 +1,14 @@
 import {all, call, put, takeLatest} from 'redux-saga/effects';
 import UserActionTypes from "./user.types";
-import {signInFailure, signInSuccess, signOutFailure, signOutSuccess} from "./user.action";
+import {
+    signInFailure,
+    signInSuccess,
+    signOutFailure,
+    signOutSuccess,
+    signUpFailure,
+    signUpSuccess,
+    emailSignInStart
+} from "./user.action";
 import {auth, createUserProfileDocument, getCurrentUser, googleProvider} from "../../firebase/firebase.utils";
 
 
@@ -14,6 +22,22 @@ export function* getSnapShopFromUserAuth(userAuth) {
     } catch (error) {
         yield put(signInFailure(error))
     }
+}
+
+export function* signUp({payload: {email, password, displayName}}) {
+    try {
+        const {user} = yield auth.createUserWithEmailAndPassword(email, password);
+        yield createUserProfileDocument(user, {displayName});
+        // yield put(signUpSuccess());
+        yield put(signUpSuccess({user, additionalData: {displayName}}));
+        // yield put(emailSignInStart({email, password}));
+    } catch (error) {
+        yield put(signUpFailure(error));
+    }
+}
+
+export function* signInAfterSignUp({payload: {user, addtionalData}}) {
+    yield getSnapShopFromUserAuth(user,addtionalData);
 }
 
 
@@ -39,20 +63,20 @@ export function* signInWitEmail({payload: {email, password}}) {
 export function* isUserAuthenticated() {
     try {
         const userAuth = yield getCurrentUser();
-        if(!userAuth) return;
+        if (!userAuth) return;
         yield getSnapShopFromUserAuth(userAuth);
-    } catch(error) {
+    } catch (error) {
         yield put(signInFailure(error));
     }
 }
 
 export function* signOut() {
-  try {
-      yield auth.signOut();
-      yield put(signOutSuccess())
-  } catch (error) {
-      yield put(signOutFailure(error))
-  }
+    try {
+        yield auth.signOut();
+        yield put(signOutSuccess())
+    } catch (error) {
+        yield put(signOutFailure(error))
+    }
 }
 
 export function* onGoogleSignInStart() {
@@ -71,12 +95,22 @@ export function* onSignOutStart() {
     yield takeLatest(UserActionTypes.SIGN_OUT_START, signOut)
 }
 
+export function* onSignUpStart() {
+    yield takeLatest(UserActionTypes.SIGN_UP_START, signUp)
+}
+
+export function* onSignUpSuccess() {
+    yield takeLatest(UserActionTypes.SIGN_UP_SUCCESS, signInAfterSignUp)
+}
+
 export function* userSagas() {
     yield all([
         call(onGoogleSignInStart),
         call(onEmailSignInStart),
         call(onCheckUserSession),
-        call(onSignOutStart)
+        call(onSignOutStart),
+        call(onSignUpStart),
+        call(onSignUpSuccess)
     ]);
 }
 
